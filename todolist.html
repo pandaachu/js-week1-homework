@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.css"
+    />
+    <style>
+      .completed {
+        text-decoration: line-through;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app" class="container my-3">
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text">待辦事項</span>
+        </div>
+        <input type="text" class="form-control" placeholder="請輸入要做的事項" id="newTodo" />
+        <div class="input-group-append">
+          <button class="btn btn-primary" type="button" id="addTodo">新增</button>
+        </div>
+      </div>
+      <div class="card text-center">
+        <ul class="list-group list-group-flush text-left" id="todoList"></ul>
+        <div class="card-footer d-flex justify-content-between">
+          <span>
+            還有
+            <span id="taskCount">0</span>
+            筆事項
+          </span>
+          <a href="#" id="clearTask">清除所有事項</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 本作業有參考範例程式碼
+
+      // 先定義元素
+      let newTodoInput = document.querySelector('#newTodo');
+      let addTodoBtn = document.querySelector('#addTodo');
+      let todoList = document.querySelector('#todoList');
+      let taskCount = document.querySelector('#taskCount');
+      let clearTaskBtn = document.querySelector('#clearTask');
+
+      // 監聽事件
+      addTodoBtn.addEventListener('click', addTodo);
+      todoList.addEventListener('click', doSomething); // 監聽任務列表的 checkbox, 任務劃線狀態的操作
+      clearTaskBtn.addEventListener('click', clearTask);
+
+      // 建立資料
+      var todoData = []; // 放資料的空陣列
+      renderPage(todoData); //進入時先刷新頁面一次
+
+      // 新增資料
+      function addTodo() {
+        // 新增事項
+        var newTodo = newTodoInput.value.trim(); // trim 可以移除前後的空白,避免輸入多於字元
+        var timeStamp = Math.floor(Date.now()); // 產生獨一的 id
+        if (newTodo !== '') {
+          // 如果請輸入要做的事項有值的話會進行
+          todoData.push({
+            id: timeStamp,
+            title: newTodo,
+            completed: false,
+          });
+          renderPage(todoData);
+          newTodoInput.value = '';
+        }
+      }
+
+      // 刪除單筆資料
+      function removeTodo(id) {
+        // 把 id 傳入
+        var newIndex = 0; // 建立一個型別為數字的變數
+        todoData.forEach((item, key) => {
+          // 找當前選擇的資料
+          if (id == item.id) {
+            // 對比傳進來的 id 跟 forEach 找到的 item.id
+            newIndex = key; // 取得該資料的索引值
+          }
+        });
+        todoData.splice(newIndex, 1); // 刪除該資料
+        renderPage(todoData); // 刪除後刷新畫面
+      }
+
+      // 完成事項的樣式轉換
+      function completeTodo(id) {
+        todoData.forEach(item => {
+          if (id == item.id) {
+            // item.completed = item.completed ? false : true;
+            if (item.completed) {
+              item.completed = false;
+            } else {
+              item.completed = true;
+            }
+          }
+        });
+        renderPage(todoData);
+      }
+
+      // 刪除全部資料
+      function clearTask(e) {
+        e.preventDefault(); // 取消預設行為
+        todoData = []; // 用空陣列來清空資料
+        renderPage(todoData); // 刷新畫面
+      }
+
+      // 任務列表的刪除/打勾動作
+      function doSomething(e) {
+        var action = e.target.parentNode.dataset.action; // 定義 data-action 的值
+        var id = e.target.parentNode.dataset.id; // 取得 data-id 的值放入變數 id
+        if (action == 'remove') {
+          // 當 action 值為 'remove' 時執行 removeTodo()
+          removeTodo(id);
+        } else if (action === 'complete') {
+          // 當 action 值為 'complete' 時執行 completeTodo()
+          completeTodo(id);
+        }
+      }
+
+      //把資料渲染到頁面上
+
+      // forEach 把資料渲染到頁面上， 屬性 data-action 預設為未完成的狀態 complete
+      // data-id -> todoData.id
+      // item.completed :true -> checkbox 勾選狀態
+      // item.completed :false -> 不做更動 -> 加入空字串
+      
+      function renderPage(data) {
+        // 處理畫面的部分，呼叫時會放參數，放入 todoData 資料去製作畫面
+        var str = '';
+        data.forEach(item => {
+          str += `<li class="list-group-item">
+              <div class="d-flex">
+                <div class="form-check" data-action="complete" data-id="${item.id}">
+                  <input type="checkbox" class="form-check-input" ${item.completed ? 'checked' : ''}>
+                  <label class="form-check-label ${item.completed ? 'completed' : ''}"> ${item.title}</label>
+                </div>
+                <button type="button" class="close ml-auto remove" aria-label="Close" data-action="remove" data-id="${item.id}">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+            </li>`;
+        });
+        todoList.innerHTML = str;
+        taskCount.textContent = data.length; // 取得 data 長度來顯示剩餘任務筆數
+      }
+    </script>
+  </body>
+</html>
